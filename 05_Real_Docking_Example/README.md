@@ -31,6 +31,12 @@ To teach the pipeline, you should now have the student apply the skills from Ste
 
 *(Put all the final prepared `.pdbqt` files into a folder named `prepared_files`).*
 
+### 🐧 Pro-Tip: Using WSL & Open Babel
+If you are using a Linux terminal (like WSL or a conda environment like `mgl_env`), doing Step 3 manually for 10 files is tedious. 
+
+I have provided a bash script: `prepare_ligands_wsl.sh`. 
+If you have `obabel` installed in your terminal, just run this script! It will automatically loop through the `ligands` folder, generate 3D coordinates, add hydrogens at pH 7.4, and convert all `.sdf` files into `.pdbqt` instantly.
+
 ## 4. Automating the Docking (`run_virtual_screening.bat`)
 When screening 10 compounds (or 10,000), you don't type the Vina command manually every time. You use a batch script!
 
