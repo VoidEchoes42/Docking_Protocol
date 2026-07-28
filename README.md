@@ -33,6 +33,11 @@ We have divided the docking process into four distinct phases. Navigate to each 
 *   **Concepts:** Virtual screening, automating docking with batch scripts, identifying strong vs. weak binders.
 *   **Tools:** Python, Windows Batch Scripting, AutoDock Vina.
 
+### [Step 6: Advanced - Automated Grid Box Docking](./06_Advanced_Auto_Grid)
+*   **Goal:** Learn how to mathematically calculate the perfect grid box based on a co-crystallized ligand.
+*   **Concepts:** Geometric centroids, automated configuration generation, Python automation.
+*   **Tools:** Python, AutoDock Vina.
+
 ---
 
 ## 🛠️ Prerequisites
