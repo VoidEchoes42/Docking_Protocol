@@ -1,7 +1,7 @@
 import os
+import sys
 import subprocess
 
-# Robust path handling: automatically resolve paths regardless of where the script is run from
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.dirname(SCRIPT_DIR)
 
@@ -13,6 +13,17 @@ NATIVE_LIGAND_PDBQT = os.path.join(SCRIPT_DIR, "MK1_native.pdbqt")
 OUTPUT_PDBQT = os.path.join(SCRIPT_DIR, "MK1_redocked_out.pdbqt")
 LOG_FILE = os.path.join(SCRIPT_DIR, "MK1_redocked_log.txt")
 TEMP_CONFIG = os.path.join(SCRIPT_DIR, "temp_config.txt")
+
+def find_pythonsh():
+    candidates = [os.environ.get("PYTHONSH"),
+                  os.path.join(sys.prefix, "bin", "pythonsh"),
+                  os.path.join(os.path.dirname(sys.executable), "pythonsh")]
+    for c in candidates:
+        if c and os.path.exists(c): return c
+    for path in os.environ.get("PATH", "").split(os.pathsep):
+        cand = os.path.join(path, "pythonsh")
+        if os.path.exists(cand): return cand
+    return None
 
 def extract_native_ligand():
     print("--- 1. Extracting native ligand (MK1) from raw PDB ---")
@@ -27,18 +38,48 @@ def extract_native_ligand():
     print("Saved as {}\n".format(NATIVE_LIGAND_PDB))
     return True
 
+ADT_LIGAND_HELPER = r'''
+import sys
+from MolKit import Read
+from AutoDockTools.MoleculePreparation import AD4LigandPreparation
+
+infile, outfile = sys.argv[1:3]
+mol = Read(infile)[0]
+mol.buildBondsByDistance()
+LPO = AD4LigandPreparation(
+    mol, mode='automatic',
+    repairs='bonds_hydrogens',
+    charges_to_add='gasteiger',
+    cleanup='nphs_lps',
+    allowed_bonds='backbone',
+    root='auto',
+    outputfilename=outfile)
+'''
+
 def prepare_ligand():
-    print("--- 2. Converting native ligand to PDBQT using Open Babel ---")
-    # No --gen3d here! We want to KEEP the original crystal structure 3D conformation!
-    # We MUST add Gasteiger partial charges for AutoDock Vina to score it correctly!
-    cmd = "obabel -ipdb {} -opdbqt -O {} -p 7.4 --partialcharge gasteiger".format(NATIVE_LIGAND_PDB, NATIVE_LIGAND_PDBQT)
-    try:
-        subprocess.check_call(cmd, shell=True)
-        print("Successfully generated {}\n".format(NATIVE_LIGAND_PDBQT))
-        return True
-    except subprocess.CalledProcessError:
-        print("Error running Open Babel.\n")
+    print("--- 2. Converting native ligand to PDBQT using AutoDockTools ---")
+    pythonsh = find_pythonsh()
+    if not pythonsh:
+        print("ERROR: 'pythonsh' not found. Please activate mgl_env.")
         return False
+        
+    helper_path = "_ligand_prep.py"
+    with open(helper_path, "w") as fh:
+        fh.write(ADT_LIGAND_HELPER)
+
+    cmd = [pythonsh, helper_path, NATIVE_LIGAND_PDB, NATIVE_LIGAND_PDBQT]
+    try:
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = p.communicate()
+        if p.returncode == 0 and os.path.exists(NATIVE_LIGAND_PDBQT):
+            print("Successfully generated {}\n".format(NATIVE_LIGAND_PDBQT))
+            return True
+        else:
+            print("AutoDockTools failed:\n" + err)
+            return False
+    finally:
+        if os.path.exists(helper_path):
+            os.remove(helper_path)
 
 def calculate_grid_box(padding=5.0):
     print("--- 3. Calculating exact Grid Box based on native ligand ---")
