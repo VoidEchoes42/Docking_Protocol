@@ -1,0 +1,84 @@
+import os
+import subprocess
+
+# Paths based on previous steps
+RAW_PROTEIN = "../protein/1HSG_raw.pdb"
+RECEPTOR_PDBQT = "../protein/1HSG_raw_receptor.pdbqt"
+NATIVE_LIGAND_PDB = "MK1_native.pdb"
+NATIVE_LIGAND_PDBQT = "MK1_native.pdbqt"
+OUTPUT_PDBQT = "MK1_redocked_out.pdbqt"
+LOG_FILE = "MK1_redocked_log.txt"
+
+def extract_native_ligand():
+    print("--- 1. Extracting native ligand (MK1) from raw PDB ---")
+    if not os.path.exists(RAW_PROTEIN):
+        print("Error: {} not found!".format(RAW_PROTEIN))
+        return False
+        
+    with open(RAW_PROTEIN, 'r') as fin, open(NATIVE_LIGAND_PDB, 'w') as fout:
+        for line in fin:
+            if line.startswith("HETATM") and "MK1" in line:
+                fout.write(line)
+    print("Saved as {}\n".format(NATIVE_LIGAND_PDB))
+    return True
+
+def prepare_ligand():
+    print("--- 2. Converting native ligand to PDBQT using Open Babel ---")
+    # No --gen3d here! We want to KEEP the original crystal structure 3D conformation!
+    # We just add hydrogens and charges.
+    cmd = "obabel -ipdb {} -opdbqt -O {} -p 7.4".format(NATIVE_LIGAND_PDB, NATIVE_LIGAND_PDBQT)
+    try:
+        subprocess.check_call(cmd, shell=True)
+        print("Successfully generated {}\n".format(NATIVE_LIGAND_PDBQT))
+        return True
+    except subprocess.CalledProcessError:
+        print("Error running Open Babel.\n")
+        return False
+
+def calculate_grid_box(padding=5.0):
+    print("--- 3. Calculating exact Grid Box based on native ligand ---")
+    x_coords, y_coords, z_coords = [], [], []
+    
+    with open(NATIVE_LIGAND_PDB, 'r') as f:
+        for line in f:
+            if line.startswith("HETATM") or line.startswith("ATOM"):
+                x_coords.append(float(line[30:38].strip()))
+                y_coords.append(float(line[38:46].strip()))
+                z_coords.append(float(line[46:54].strip()))
+
+    center_x = sum(x_coords) / len(x_coords)
+    center_y = sum(y_coords) / len(y_coords)
+    center_z = sum(z_coords) / len(z_coords)
+    
+    size_x = (max(x_coords) - min(x_coords)) + (padding * 2)
+    size_y = (max(y_coords) - min(y_coords)) + (padding * 2)
+    size_z = (max(z_coords) - min(z_coords)) + (padding * 2)
+    
+    center = (round(center_x, 3), round(center_y, 3), round(center_z, 3))
+    size = (round(size_x, 3), round(size_y, 3), round(size_z, 3))
+    
+    print("Calculated Center: X={}, Y={}, Z={}".format(center[0], center[1], center[2]))
+    print("Calculated Size:   X={}, Y={}, Z={}\n".format(size[0], size[1], size[2]))
+    return center, size
+
+def run_docking(center, size):
+    print("--- 4. Running Vina Redocking ---")
+    config_text = "receptor = {req}\nligand = {lig}\ncenter_x = {cx}\ncenter_y = {cy}\ncenter_z = {cz}\nsize_x = {sx}\nsize_y = {sy}\nsize_z = {sz}\nexhaustiveness = 16\nnum_modes = 9\nenergy_range = 3\nseed = 42\n".format(
+        req=RECEPTOR_PDBQT, lig=NATIVE_LIGAND_PDBQT, 
+        cx=center[0], cy=center[1], cz=center[2], 
+        sx=size[0], sy=size[1], sz=size[2]
+    )
+    
+    with open("temp_config.txt", "w") as f:
+        f.write(config_text)
+        
+    cmd = "vina --config temp_config.txt --out {} | tee {}".format(OUTPUT_PDBQT, LOG_FILE)
+    subprocess.check_call(cmd, shell=True)
+    os.remove("temp_config.txt")
+    print("\nRedocking Complete! Open PyMOL to compare {} and {}".format(NATIVE_LIGAND_PDB, OUTPUT_PDBQT))
+
+if __name__ == "__main__":
+    if extract_native_ligand():
+        if prepare_ligand():
+            center, size = calculate_grid_box()
+            run_docking(center, size)

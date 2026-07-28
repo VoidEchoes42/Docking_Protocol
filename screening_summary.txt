@@ -2,3 +2,6 @@ Docking Summary Results
 =======================
 Finished Amprenavir. Best Score: (kcal/mol) kcal/mol
 Finished Aspirin_Control. Best Score: (kcal/mol) kcal/mol
+Finished Atazanavir. Best Score: (kcal/mol) kcal/mol
+Finished Darunavir. Best Score: (kcal/mol) kcal/mol
+Finished Indinavir. Best Score: (kcal/mol) kcal/mol

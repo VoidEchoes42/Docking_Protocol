@@ -38,6 +38,11 @@ We have divided the docking process into four distinct phases. Navigate to each 
 *   **Concepts:** Geometric centroids, automated configuration generation, Python automation.
 *   **Tools:** Python, AutoDock Vina.
 
+### [Step 7: Redocking Validation (Self-Docking)](./07_Redocking_Validation)
+*   **Goal:** Prove that the docking protocol is scientifically valid.
+*   **Concepts:** Redocking, RMSD (Root-Mean-Square Deviation) calculation, protocol validation.
+*   **Tools:** Python, AutoDock Vina, PyMOL.
+
 ---
 
 ## 🛠️ Prerequisites
