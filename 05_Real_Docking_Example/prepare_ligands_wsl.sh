@@ -22,7 +22,9 @@ for sdf_file in *.sdf; do
     # -opdbqt : output is PDBQT
     # --gen3d : generate 3D coordinates (PubChem gives 2D by default)
     # -p 7.4 : add hydrogens at physiological pH
-    obabel -isdf "$sdf_file" -opdbqt -O "${base_name}.pdbqt" --gen3d -p 7.4
+    # --partialcharge gasteiger : Add required partial charges for Vina
+    # --minimize --ff MMFF94 --steps 2500 : Relax the 3D structure so Vina can dock it
+    obabel -isdf "$sdf_file" -opdbqt -O "${base_name}.pdbqt" --gen3d -p 7.4 --partialcharge gasteiger --minimize --ff MMFF94 --steps 2500
     
     echo "Done with $base_name"
     echo "-----------------------------------"

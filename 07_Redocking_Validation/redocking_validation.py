@@ -30,7 +30,8 @@ def extract_native_ligand():
 def prepare_ligand():
     print("--- 2. Converting native ligand to PDBQT using Open Babel ---")
     # No --gen3d here! We want to KEEP the original crystal structure 3D conformation!
-    cmd = "obabel -ipdb {} -opdbqt -O {} -p 7.4".format(NATIVE_LIGAND_PDB, NATIVE_LIGAND_PDBQT)
+    # We MUST add Gasteiger partial charges for AutoDock Vina to score it correctly!
+    cmd = "obabel -ipdb {} -opdbqt -O {} -p 7.4 --partialcharge gasteiger".format(NATIVE_LIGAND_PDB, NATIVE_LIGAND_PDBQT)
     try:
         subprocess.check_call(cmd, shell=True)
         print("Successfully generated {}\n".format(NATIVE_LIGAND_PDBQT))
