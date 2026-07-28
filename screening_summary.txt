@@ -1,0 +1,4 @@
+Docking Summary Results
+=======================
+Finished Amprenavir. Best Score: (kcal/mol) kcal/mol
+Finished Aspirin_Control. Best Score: (kcal/mol) kcal/mol

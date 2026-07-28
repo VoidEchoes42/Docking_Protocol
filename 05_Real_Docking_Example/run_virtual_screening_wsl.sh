@@ -47,8 +47,13 @@ SUMMARY_LOG="screening_summary.txt"
 echo "Docking Summary Results" > "$SUMMARY_LOG"
 echo "=======================" >> "$SUMMARY_LOG"
 
+# Count total ligands for progress tracking
+ligand_files=("$LIGAND_DIR"/*.pdbqt)
+total_ligands=${#ligand_files[@]}
+current_ligand=1
+
 # Loop through every PDBQT ligand file in the ligand directory
-for lig_path in "$LIGAND_DIR"/*.pdbqt; do
+for lig_path in "${ligand_files[@]}"; do
     if [ ! -f "$lig_path" ]; then
         echo "Error: No .pdbqt files found in $LIGAND_DIR. Did you run prepare_ligands_wsl.sh?"
         exit 1
@@ -58,19 +63,21 @@ for lig_path in "$LIGAND_DIR"/*.pdbqt; do
     filename=$(basename -- "$lig_path")
     base_name="${filename%.pdbqt}"
     
-    echo "Docking ligand: $base_name"
+    echo -e "\n=================================================="
+    echo " [$current_ligand/$total_ligands] Docking ligand: $base_name"
+    echo "=================================================="
     
     out_file="$OUTPUT_DIR/${base_name}_out.pdbqt"
     log_file="$OUTPUT_DIR/${base_name}_log.txt"
     
-    # Run Vina
-    vina --receptor "$PROTEIN" --ligand "$lig_path" --config "$CONFIG" --out "$out_file" > "$log_file"
+    # Run Vina and use 'tee' to show the progress bar on screen while saving to log file
+    vina --receptor "$PROTEIN" --ligand "$lig_path" --config "$CONFIG" --out "$out_file" | tee "$log_file"
     
     # Extract the top score from the log file (usually on line 26 or after the table header)
     top_score=$(grep -A 1 "mode |   affinity" "$log_file" | tail -n 1 | awk '{print $2}')
     
     echo "Finished $base_name. Best Score: $top_score kcal/mol" >> "$SUMMARY_LOG"
-    echo "--------------------------------------------------"
+    ((current_ligand++))
 done
 
 echo ""
