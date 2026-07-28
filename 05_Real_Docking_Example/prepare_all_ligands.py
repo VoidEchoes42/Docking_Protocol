@@ -4,7 +4,8 @@ import glob
 import subprocess
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-LIGANDS_DIR = os.path.join(SCRIPT_DIR, "ligands")
+REPO_ROOT = os.path.dirname(SCRIPT_DIR)
+LIGANDS_DIR = os.path.join(REPO_ROOT, "ligands")
 
 def find_pythonsh():
     candidates = [os.environ.get("PYTHONSH"),
