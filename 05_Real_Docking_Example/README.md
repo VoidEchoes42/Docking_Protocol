@@ -40,8 +40,8 @@ Run the provided python script:
 This script strips all water and native ligands, then uses `obabel` to add hydrogens at pH 7.4, assign charges, and output a pristine `1HSG_receptor.pdbqt` ready for docking.
 
 **2. Automating Ligand Preparation:**
-I have provided a bash script: `prepare_ligands_wsl.sh`. 
-If you have `obabel` installed in your terminal, just run this script! It will automatically loop through the `ligands` folder, generate 3D coordinates, add hydrogens at pH 7.4, and convert all 10 `.sdf` files into `.pdbqt` instantly.
+I have provided a highly advanced Python script: `prepare_all_ligands.py`. 
+Run this script from your `mgl_env`. It will automatically loop through the `ligands` folder, use OpenBabel to generate 3D coordinates and minimize them, and then invoke the native AutoDockTools API to perfectly build the Torsion tree and assign Gasteiger charges. It converts all 10 `.sdf` files into pristine `.pdbqt` files instantly!
 
 ## 4. Automating the Docking (`run_virtual_screening.bat`)
 When screening 10 compounds (or 10,000), you don't type the Vina command manually every time. You use a batch script!
