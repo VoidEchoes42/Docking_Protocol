@@ -1,13 +1,18 @@
 import os
 import subprocess
 
-# Paths based on previous steps
-RAW_PROTEIN = "../protein/1HSG_raw.pdb"
-RECEPTOR_PDBQT = "../protein/1HSG_raw_receptor.pdbqt"
-NATIVE_LIGAND_PDB = "MK1_native.pdb"
-NATIVE_LIGAND_PDBQT = "MK1_native.pdbqt"
-OUTPUT_PDBQT = "MK1_redocked_out.pdbqt"
-LOG_FILE = "MK1_redocked_log.txt"
+# Robust path handling: automatically resolve paths regardless of where the script is run from
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+REPO_ROOT = os.path.dirname(SCRIPT_DIR)
+
+RAW_PROTEIN = os.path.join(REPO_ROOT, "protein", "1HSG_raw.pdb")
+RECEPTOR_PDBQT = os.path.join(REPO_ROOT, "protein", "1HSG_raw_receptor.pdbqt")
+
+NATIVE_LIGAND_PDB = os.path.join(SCRIPT_DIR, "MK1_native.pdb")
+NATIVE_LIGAND_PDBQT = os.path.join(SCRIPT_DIR, "MK1_native.pdbqt")
+OUTPUT_PDBQT = os.path.join(SCRIPT_DIR, "MK1_redocked_out.pdbqt")
+LOG_FILE = os.path.join(SCRIPT_DIR, "MK1_redocked_log.txt")
+TEMP_CONFIG = os.path.join(SCRIPT_DIR, "temp_config.txt")
 
 def extract_native_ligand():
     print("--- 1. Extracting native ligand (MK1) from raw PDB ---")
@@ -25,7 +30,6 @@ def extract_native_ligand():
 def prepare_ligand():
     print("--- 2. Converting native ligand to PDBQT using Open Babel ---")
     # No --gen3d here! We want to KEEP the original crystal structure 3D conformation!
-    # We just add hydrogens and charges.
     cmd = "obabel -ipdb {} -opdbqt -O {} -p 7.4".format(NATIVE_LIGAND_PDB, NATIVE_LIGAND_PDBQT)
     try:
         subprocess.check_call(cmd, shell=True)
@@ -69,12 +73,12 @@ def run_docking(center, size):
         sx=size[0], sy=size[1], sz=size[2]
     )
     
-    with open("temp_config.txt", "w") as f:
+    with open(TEMP_CONFIG, "w") as f:
         f.write(config_text)
         
-    cmd = "vina --config temp_config.txt --out {} | tee {}".format(OUTPUT_PDBQT, LOG_FILE)
+    cmd = "vina --config {} --out {} | tee {}".format(TEMP_CONFIG, OUTPUT_PDBQT, LOG_FILE)
     subprocess.check_call(cmd, shell=True)
-    os.remove("temp_config.txt")
+    os.remove(TEMP_CONFIG)
     print("\nRedocking Complete! Open PyMOL to compare {} and {}".format(NATIVE_LIGAND_PDB, OUTPUT_PDBQT))
 
 if __name__ == "__main__":
