@@ -1,19 +1,27 @@
-import urllib.request
 import os
 import time
 
+try:
+    # Python 3
+    from urllib.request import urlretrieve
+except ImportError:
+    # Python 2 (mgl_env compatibility)
+    from urllib import urlretrieve
+
 def download_file(url, filename):
-    print(f"Downloading {filename}...")
+    print("Downloading {}...".format(filename))
     try:
-        urllib.request.urlretrieve(url, filename)
-        print(f"Successfully downloaded {filename}\n")
+        urlretrieve(url, filename)
+        print("Successfully downloaded {}\n".format(filename))
     except Exception as e:
-        print(f"Error downloading {filename}: {e}\n")
+        print("Error downloading {}: {}\n".format(filename, e))
     time.sleep(1)  # Be nice to the servers
 
-# Create directories
-os.makedirs("protein", exist_ok=True)
-os.makedirs("ligands", exist_ok=True)
+# Create directories (Python 2.7 compatible)
+if not os.path.exists("protein"):
+    os.makedirs("protein")
+if not os.path.exists("ligands"):
+    os.makedirs("ligands")
 
 # 1. Download HIV-1 Protease (1HSG) - A classic non-metalloprotein target
 print("--- Fetching Target Protein (HIV-1 Protease) ---")
@@ -35,8 +43,8 @@ ligands = {
 }
 
 for name, cid in ligands.items():
-    url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/{cid}/SDF"
-    filename = f"ligands/{name}.sdf"
+    url = "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/{}/SDF".format(cid)
+    filename = "ligands/{}.sdf".format(name)
     download_file(url, filename)
 
 print("All downloads complete! You now have a real dataset to practice with.")

@@ -42,41 +42,34 @@ def create_config_and_run(receptor, ref_ligand, ligands_dir, output_dir="advance
     if not center:
         return
 
-    print(f"Calculated Center: X={center[0]}, Y={center[1]}, Z={center[2]}")
-    print(f"Calculated Size: X={size[0]}, Y={size[1]}, Z={size[2]}\n")
+    print("Calculated Center: X={}, Y={}, Z={}".format(center[0], center[1], center[2]))
+    print("Calculated Size: X={}, Y={}, Z={}\n".format(size[0], size[1], size[2]))
 
-    os.makedirs(output_dir, exist_ok=True)
+    # Python 2.7 compatible directory creation
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
     
     print("--- 2. Starting High-Throughput Docking ---")
     ligand_files = glob.glob(os.path.join(ligands_dir, "*.pdbqt"))
     
     for lig in ligand_files:
         lig_name = os.path.basename(lig).replace(".pdbqt", "")
-        print(f"Docking {lig_name}...")
+        print("Docking {}...".format(lig_name))
         
         # Write temporary config for this specific run
-        config_text = f"""receptor = {receptor}
-ligand = {lig}
-center_x = {center[0]}
-center_y = {center[1]}
-center_z = {center[2]}
-size_x = {size[0]}
-size_y = {size[1]}
-size_z = {size[2]}
-exhaustiveness = 16
-num_modes = 9
-energy_range = 3
-seed = 42
-"""
+        config_text = "receptor = {req}\nligand = {lig}\ncenter_x = {cx}\ncenter_y = {cy}\ncenter_z = {cz}\nsize_x = {sx}\nsize_y = {sy}\nsize_z = {sz}\nexhaustiveness = 16\nnum_modes = 9\nenergy_range = 3\nseed = 42\n".format(
+            req=receptor, lig=lig, cx=center[0], cy=center[1], cz=center[2], sx=size[0], sy=size[1], sz=size[2]
+        )
+        
         with open("temp_config.txt", "w") as f:
             f.write(config_text)
             
-        out_file = os.path.join(output_dir, f"{lig_name}_out.pdbqt")
-        log_file = os.path.join(output_dir, f"{lig_name}_log.txt")
+        out_file = os.path.join(output_dir, "{}_out.pdbqt".format(lig_name))
+        log_file = os.path.join(output_dir, "{}_log.txt".format(lig_name))
         
-        # Run Vina
-        cmd = f"vina --config temp_config.txt --out {out_file} > {log_file}"
-        subprocess.run(cmd, shell=True)
+        # Run Vina (Using check_call instead of run for Python 2.7 compatibility)
+        cmd = "vina --config temp_config.txt --out {} > {}".format(out_file, log_file)
+        subprocess.check_call(cmd, shell=True)
         
     print("\n--- All done! Check the results folder. ---")
     if os.path.exists("temp_config.txt"):
