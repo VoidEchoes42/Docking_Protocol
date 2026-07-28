@@ -1,0 +1,23 @@
+# Ignore generated tutorial directories and files
+protein/
+ligands/
+docking_results/
+config.txt
+temp_config.txt
+screening_summary.txt
+
+# Redocking Validation generated files
+07_Redocking_Validation/MK1_native.pdb
+07_Redocking_Validation/MK1_native.pdbqt
+07_Redocking_Validation/MK1_redocked_out.pdbqt
+07_Redocking_Validation/MK1_redocked_log.txt
+07_Redocking_Validation/temp_config.txt
+07_Redocking_Validation/_ligand_prep.py
+
+# Python
+__pycache__/
+*.pyc
+
+# OS generated files
+.DS_Store
+Thumbs.db
